@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { signIn, getOrCreateProfile } from "@/services/auth.service"
+import Link from "next/link"
 
 interface LoginFormProps extends React.ComponentProps<"div"> {
   onShowSignup?: () => void
@@ -107,12 +108,12 @@ export function LoginForm({ className, onShowSignup, ...props }: LoginFormProps)
               <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="login-password">Password</FieldLabel>
-                  <a
-                    href="#"
+                  <Link
+                    href="/forgot-password"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                   >
                     Forgot your password?
-                  </a>
+                  </Link>
                 </div>
                 <Input
                   id="login-password"

@@ -13,7 +13,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({ request })
@@ -25,27 +25,49 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Refresh session — do not run any logic between createServerClient and
-  // getUser() or session will not be reliable.
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
 
-  // Protected route prefixes
-  const isProtected =
-    pathname.startsWith("/player") || pathname.startsWith("/turf")
+  const isProtectedPlayer = pathname.startsWith("/player")
+  const isProtectedTurf = pathname.startsWith("/turf")
+  const isProtectedAdmin = pathname.startsWith("/admin") && pathname !== "/admin/login"
 
-  // Public routes that never require auth
-  const isPublic = pathname === "/" || pathname.startsWith("/terms") || pathname.startsWith("/privacy")
+  // ── Unauthenticated users ────────────────────────────────────────────────────
+  if (!user) {
+    if (isProtectedPlayer || isProtectedTurf || isProtectedAdmin) {
+      const url = request.nextUrl.clone()
+      url.pathname = isProtectedAdmin ? "/admin/login" : "/"
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
 
-  if (!user && isProtected) {
+  // ── Authenticated users ──────────────────────────────────────────────────────
+  // Fetch the role from the users table (single lightweight query)
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  const role = profile?.role ?? "player"
+
+  // Super admin trying to access player/turf areas → redirect to admin
+  if (role === "super_admin" && (isProtectedPlayer || isProtectedTurf)) {
     const url = request.nextUrl.clone()
-    url.pathname = "/"
+    url.pathname = "/admin/dashboard"
     return NextResponse.redirect(url)
   }
 
-  // If user is authed and tries to visit login page, leave them — just refresh
+  // Non-admin trying to reach /admin routes → redirect out
+  if (role !== "super_admin" && isProtectedAdmin) {
+    const url = request.nextUrl.clone()
+    url.pathname = role === "turf_owner" ? "/turf/dashboard" : "/"
+    return NextResponse.redirect(url)
+  }
+
   return supabaseResponse
 }

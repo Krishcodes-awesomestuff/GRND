@@ -5,7 +5,7 @@ export interface UserProfile {
   id: string
   name: string | null
   email: string | null
-  role: "player" | "turf_owner"
+  role: "player" | "turf_owner" | "super_admin"
   location: string | null
   onboarding_completed: boolean
   sports: string[]
@@ -16,7 +16,7 @@ export interface UserProfile {
 
 export interface SignUpMetadata {
   name?: string
-  role?: "player" | "turf_owner"
+  role?: "player" | "turf_owner" | "super_admin"
 }
 
 // ─── Sign Up ─────────────────────────────────────────────────────────────────
@@ -55,6 +55,23 @@ export async function signOut() {
   const supabase = createClient()
   const { error } = await supabase.auth.signOut()
   return { error }
+}
+
+// ─── Password Management ────────────────────────────────────────────────────
+export async function resetPasswordForEmail(email: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/auth/callback?next=/update-password`,
+  })
+  return { data, error }
+}
+
+export async function updatePassword(password: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase.auth.updateUser({
+    password,
+  })
+  return { data, error }
 }
 
 // ─── Get Current User ─────────────────────────────────────────────────────────
