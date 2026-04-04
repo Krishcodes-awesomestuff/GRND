@@ -2,6 +2,7 @@
 
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
 
 export function EditRequestActions({ requestId }: { requestId: string }) {
   const router = useRouter()
@@ -19,21 +20,23 @@ export function EditRequestActions({ requestId }: { requestId: string }) {
   }
 
   return (
-    <div className="flex gap-2">
-      <button
-        onClick={() => handleAction("approved")}
-        disabled={isPending}
-        className="rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background hover:opacity-90 transition-opacity disabled:opacity-50"
-      >
-        Approve
-      </button>
-      <button
+    <div className="flex gap-2 justify-end">
+      <Button
+        variant="outline"
+        size="sm"
         onClick={() => handleAction("rejected")}
         disabled={isPending}
-        className="rounded-md border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors disabled:opacity-50"
+        className="text-destructive border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
       >
         Reject
-      </button>
+      </Button>
+      <Button
+        size="sm"
+        onClick={() => handleAction("approved")}
+        disabled={isPending}
+      >
+        Approve
+      </Button>
     </div>
   )
 }

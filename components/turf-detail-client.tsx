@@ -13,6 +13,7 @@ export function TurfDetailClient({ turf }: { turf: Turf }) {
   const [ownerPending, startOwnerTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [ownerEmail, setOwnerEmail] = useState("")
+  const [ownerName, setOwnerName] = useState("")
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
   const [ownerError, setOwnerError] = useState<string | null>(null)
   const [showOwnerForm, setShowOwnerForm] = useState(false)
@@ -66,7 +67,7 @@ export function TurfDetailClient({ turf }: { turf: Turf }) {
       const res = await fetch("/api/admin/create-owner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: ownerEmail, turf_id: turf.id }),
+        body: JSON.stringify({ email: ownerEmail, name: ownerName, turf_id: turf.id }),
       })
       const json = await res.json()
       if (!res.ok) {
@@ -75,6 +76,7 @@ export function TurfDetailClient({ turf }: { turf: Turf }) {
       }
       setGeneratedPassword(json.temp_password)
       setOwnerEmail("")
+      setOwnerName("")
     })
   }
 
@@ -172,6 +174,10 @@ export function TurfDetailClient({ turf }: { turf: Turf }) {
 
         {showOwnerForm && !generatedPassword && (
           <form onSubmit={handleGenerateOwner} className="flex gap-3 items-end">
+            <Field label="Owner Name" required>
+              <TextInput value={ownerName} onChange={e => setOwnerName(e.target.value)}
+                placeholder="John Doe" required />
+            </Field>
             <Field label="Owner Email" required>
               <TextInput type="email" value={ownerEmail} onChange={e => setOwnerEmail(e.target.value)}
                 placeholder="owner@example.com" required />

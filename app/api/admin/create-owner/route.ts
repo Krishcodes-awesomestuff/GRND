@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
   const { data: callerProfile } = await supabase.from("users").select("role").eq("id", user.id).single()
   if (callerProfile?.role !== "super_admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-  const { email, turf_id } = await req.json()
-  if (!email || !turf_id) return NextResponse.json({ error: "Email and turf_id are required." }, { status: 400 })
+  const { email, name, turf_id } = await req.json()
+  if (!email || !turf_id || !name) return NextResponse.json({ error: "Email, name, and turf_id are required." }, { status: 400 })
 
   const tempPassword = generateTempPassword()
   const adminClient = createAdminClient()
@@ -28,20 +28,20 @@ export async function POST(req: NextRequest) {
     email,
     password: tempPassword,
     email_confirm: true,
-    user_metadata: { role: "turf_owner" },
+    user_metadata: { role: "turf_owner", name },
   })
 
   if (createError) return NextResponse.json({ error: createError.message }, { status: 500 })
 
-  // Insert into users table
-  const { error: profileError } = await adminClient.from("users").insert({
-    id: newUser.user!.id,
-    email,
-    role: "turf_owner",
-    name: null,
-    location: null,
-    onboarding_completed: true,
-  })
+  // Update the users table profile (which was already created by the auth trigger)
+  const { error: profileError } = await adminClient
+    .from("users")
+    .update({
+      role: "turf_owner",
+      name: name,
+      onboarding_completed: true,
+    })
+    .eq("id", newUser.user!.id)
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 
   // Link owner to the turf
